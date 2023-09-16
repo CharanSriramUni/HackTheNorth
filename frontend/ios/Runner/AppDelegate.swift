@@ -19,8 +19,6 @@ import Flutter
           return
         }
 
-        print("Received arguments:", args)
-
         let x = args["x"] ?? 0
         let y = args["y"] ?? 0
         let width = args["width"] ?? 0
@@ -39,6 +37,7 @@ import Flutter
   private func capture(rect: CGRect, result: @escaping FlutterResult) {
     let renderer = UIGraphicsImageRenderer(size: rect.size)
     let image = renderer.image { ctx in
+      ctx.cgContext.translateBy(x: -rect.minX, y: -rect.minY)
       UIApplication.shared.windows.first?.layer.render(in: ctx.cgContext)
     }
     

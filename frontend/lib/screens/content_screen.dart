@@ -108,7 +108,7 @@ class _ContentScreenState extends State<ContentScreen> {
                   onPanEnd: (details) async {
                     points.add(null);
                     Rect largest = findLargestCircumscribedRectangle(points);
-                    
+
                     // Rect rect = Rect.fromLTRB(0, 0, 500, 500);
                     var bytes = await capture(largest);
                     Navigator.push(
@@ -153,6 +153,11 @@ class _ContentScreenState extends State<ContentScreen> {
         maxY = max(maxY, offset.dy);
       }
     }
+
+    minX += StyleConstants.width * 0.05;
+    maxX += StyleConstants.width * 0.05;
+    minY += 78.0;
+    maxY += 78.0;
 
     print("found ${minX} ${minY} ${maxX} ${maxY}");
 
