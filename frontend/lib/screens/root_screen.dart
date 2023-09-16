@@ -14,10 +14,10 @@ class RootScreen extends StatelessWidget {
       StyleConstants().init(context);
     }
 
-    var documentProvider = context.watch<DocumentProvider>();
-    if (documentProvider.document.isEmpty) {
-      return UploadScreen();
-    }
+    // var documentProvider = context.watch<DocumentProvider>();
+    // if (documentProvider.document.isEmpty) {
+    //   return UploadScreen();
+    // }
     return ContentScreen();
   }
 }
