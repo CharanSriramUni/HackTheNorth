@@ -1,2 +1,2 @@
-# HackTheNorth
-Our repository for hack the north!
+# Description
+Our repository for Hack the North!
