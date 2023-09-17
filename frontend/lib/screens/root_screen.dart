@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hackthenotes/providers/document_provider.dart';
+import 'package:hackthenotes/providers/ws_listener_provider.dart';
 import 'package:hackthenotes/screens/content_screen.dart';
 import 'package:hackthenotes/screens/upload_screen.dart';
 import 'package:hackthenotes/utils/style_constants.dart';
@@ -14,10 +14,10 @@ class RootScreen extends StatelessWidget {
       StyleConstants().init(context);
     }
 
-    // var documentProvider = context.watch<DocumentProvider>();
-    // if (documentProvider.document.isEmpty) {
-    //   return UploadScreen();
-    // }
-    return ContentScreen();
+    var documentProvider = context.watch<WSListenerProvider>();
+    if (documentProvider.document.isEmpty) {
+      return UploadScreen();
+    }
+    return const ContentScreen();
   }
 }
