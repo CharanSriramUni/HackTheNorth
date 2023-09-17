@@ -9,6 +9,8 @@ import 'package:google_mlkit_digital_ink_recognition/google_mlkit_digital_ink_re
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:hackthenotes/providers/command_recognizer_provider.dart';
 import 'package:hackthenotes/screens/image_screen.dart';
+import 'package:hackthenotes/services/api_service.dart';
+import 'package:hackthenotes/widgets/lookup_dialog.dart';
 import 'package:hackthenotes/utils/colors.dart';
 import 'package:hackthenotes/utils/style_constants.dart';
 import 'package:ionicons/ionicons.dart';
@@ -26,7 +28,10 @@ class ContentScreen extends StatefulWidget {
   State<ContentScreen> createState() => _ContentScreenState();
 }
 
-class _ContentScreenState extends State<ContentScreen> {
+class _ContentScreenState extends State<ContentScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController animationController;
+
   List<Offset?> points = [];
   List<Offset?> circledPoints = [];
   var isUsingStylus = false;
@@ -38,21 +43,33 @@ class _ContentScreenState extends State<ContentScreen> {
   final GlobalKey repaintBoundaryKey = GlobalKey();
   final platform = MethodChannel('com.example.screenshot_channel');
 
+  int age = 0;
+  List<IconData> ageIcons = [
+    Icons.child_friendly_outlined,
+    Icons.school_outlined,
+    Icons.work_outline,
+  ];
+
   @override
   void initState() {
+    animationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+
     webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(TWColors.slate100)
       ..setNavigationDelegate(
         NavigationDelegate(
-          // onProgress: (int progress) async {
-          //   // Update loading bar.
-          //   if(progress == 100) {
-          //     await Future.delayed(Duration(milliseconds: 100));
-          //
-          //   }
-          // },
-        ),
+            // onProgress: (int progress) async {
+            //   // Update loading bar.
+            //   if(progress == 100) {
+            //     await Future.delayed(Duration(milliseconds: 100));
+            //
+            //   }
+            // },
+            ),
       );
     super.initState();
   }
@@ -60,12 +77,11 @@ class _ContentScreenState extends State<ContentScreen> {
   @override
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
-    await webViewController.loadHtmlString(Provider
-        .of<WSListenerProvider>(context)
-        .document).whenComplete(() async {
-      Offset offset = Provider
-          .of<WSListenerProvider>(context, listen: false)
-          .offset;
+    await webViewController
+        .loadHtmlString(Provider.of<WSListenerProvider>(context).document)
+        .whenComplete(() async {
+      Offset offset =
+          Provider.of<WSListenerProvider>(context, listen: false).offset;
       await Future.delayed(Duration(milliseconds: 100));
       await webViewController.scrollTo(offset.dx.floor(), offset.dy.floor());
       await Future.delayed(Duration(milliseconds: 200));
@@ -76,6 +92,12 @@ class _ContentScreenState extends State<ContentScreen> {
         circled = false;
       });
     });
+  }
+
+  @override
+  void dispose() {
+    animationController.dispose();
+    super.dispose();
   }
 
   @override
@@ -94,6 +116,15 @@ class _ContentScreenState extends State<ContentScreen> {
           IconButton(
             onPressed: () {
               setState(() {
+                age = (age + 1) % 3;
+                recognizerProvider.age = age;
+              });
+            },
+            icon: Icon(ageIcons[age], color: NotesColors.black),
+          ),
+          IconButton(
+            onPressed: () {
+              setState(() {
                 points.clear();
                 circledPoints.clear();
                 isUsingStylus = !isUsingStylus;
@@ -106,6 +137,16 @@ class _ContentScreenState extends State<ContentScreen> {
                     color: NotesColors.black),
           ),
         ],
+        leading: IconButton(
+          icon: const Icon(
+            Ionicons.chevron_back_outline,
+            color: NotesColors.black,
+          ),
+          onPressed: () {
+            // context.read<WSListenerProvider>().updateDocument('');
+            APIService.clearDoc();
+          },
+        ),
         elevation: 0,
       ),
       body: Padding(
@@ -160,20 +201,27 @@ class _ContentScreenState extends State<ContentScreen> {
                   },
                   onPanEnd: (details) async {
                     points.add(null);
+                    showInfoDialog(Container());
                     if (circled) {
                       recognizerProvider.points.clear();
-                      Provider.of<WSListenerProvider>(context, listen: false).setOffset(webViewController.getScrollPosition());
+                      Provider.of<WSListenerProvider>(context, listen: false)
+                          .setOffset(webViewController.getScrollPosition());
                       await recognizerProvider.recognizeText();
                     } else {
                       circledPoints = [...points];
-                      Rect largest = findLargestCircumscribedRectangle(circledPoints);
+                      Rect largest =
+                          findLargestCircumscribedRectangle(circledPoints);
                       var bytes = await capture(largest);
-                      var recognizedText = await TextRecognitionService.recognizeText(bytes!);
-                      print(recognizedText);
-                      Provider.of<CommandRecognizerProvider>(context, listen: false).circledText = recognizedText;
-                      circled = true;
+                      if (bytes != null) {
+                        var recognizedText =
+                            await TextRecognitionService.recognizeText(bytes!);
+                        print(recognizedText);
+                        Provider.of<CommandRecognizerProvider>(context,
+                                listen: false)
+                            .circledText = recognizedText;
+                        circled = true;
+                      }
                     }
-
                   },
                   child: CustomPaint(
                     painter: NotePainter(points),
@@ -238,39 +286,29 @@ class _ContentScreenState extends State<ContentScreen> {
     }
   }
 
-  // Future<Uint8List?> captureRectangle(Rect captureRect) async {
-  //   try {
-  //     RenderRepaintBoundary boundary = repaintBoundaryKey.currentContext!
-  //         .findRenderObject() as RenderRepaintBoundary;
-  //     ui.Image fullImage = await boundary.toImage(pixelRatio: 1.0);
+  void showInfoDialog(Widget widget) {
+    OverlayEntry overlayEntry = OverlayEntry(
+      builder: (context) => ScaleTransition(
+        scale: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+          parent: animationController,
+          curve: Curves.elasticOut,
+        )),
+        child: LookupDialog(
+            content: Column(
+              children: [
+                Text(
+                    "This is an example of a long text. It can span multiple lines."),
+                Image.network('https://example.com/path/to/your/image.png'),
+                Text("Another piece of text."),
+              ],
+            ),
+            targetPosition: Offset(100, 200) // adjust the position as needed
+            ),
+      ),
+    );
 
-  //     // Crop the image
-  //     final recorder = ui.PictureRecorder();
-  //     final canvas = Canvas(
-  //         recorder,
-  //         Rect.fromPoints(
-  //             Offset(0, 0), captureRect.bottomRight - captureRect.topLeft));
-  //     canvas.drawImageRect(
-  //         fullImage,
-  //         captureRect,
-  //         Rect.fromPoints(
-  //             Offset(0, 0), captureRect.size.bottomRight(Offset.zero)),
-  //         Paint());
-
-  //     final picture = recorder.endRecording();
-  //     final croppedImage = await picture.toImage(
-  //         captureRect.width.toInt(), captureRect.height.toInt());
-
-  //     ByteData? byteData =
-  //         await croppedImage.toByteData(format: ui.ImageByteFormat.png);
-  //     if (byteData != null) {
-  //       return byteData.buffer.asUint8List();
-  //     }
-  //   } catch (e) {
-  //     print(e);
-  //   }
-  //   return null;
-  // }
+    Overlay.of(context).insert(overlayEntry);
+  }
 }
 
 class NotePainter extends CustomPainter {
