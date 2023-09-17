@@ -19,7 +19,7 @@ class APIService {
   static Future<void> summarize(String text) async {
     const String apiURL = "$endPoint/summarize";
     final Map<String, dynamic> requestBody = {
-      'selected_text': text, // Encode the URL as a string in the request body
+      'selected_text': text,
     };
     try {
       final response = await post(
@@ -34,7 +34,38 @@ class APIService {
   static Future<void> context(String text) async {
     const String apiURL = "$endPoint/context";
     final Map<String, dynamic> requestBody = {
-      'selected_text': text, // Encode the URL as a string in the request body
+      'selected_text': text,
+    };
+    try {
+      final response = await post(
+          Uri.parse(apiURL),
+          body: requestBody
+      );
+    } catch (e) {
+
+    }
+  }
+
+  static Future<void> visualize(String text) async {
+    const String apiURL = "$endPoint/visualize";
+    final Map<String, dynamic> requestBody = {
+      'selected_text': text,
+    };
+    try {
+      final response = await post(
+          Uri.parse(apiURL),
+          body: requestBody
+      );
+    } catch (e) {
+
+    }
+  }
+
+  static Future<void> question(String text, String question) async {
+    const String apiURL = "$endPoint/question";
+    final Map<String, dynamic> requestBody = {
+      'selected_text': text,
+      'question': question
     };
     try {
       final response = await post(

@@ -6,7 +6,7 @@ import '../services/api_service.dart';
 class CommandRecognizerProvider extends ChangeNotifier {
 
   String circledText = "";
-  final List<String> commands = ['summarize', 'context',  'visualize'];
+  final List<String> commands = ['summarize', 'context',  'visualize', '?'];
 
   final String language = 'en-US';
   late final DigitalInkRecognizer digitalInkRecognizer =
@@ -40,6 +40,12 @@ class CommandRecognizerProvider extends ChangeNotifier {
         }else if(command == "context") {
           print("contexting...");
           APIService.context(circledText);
+        }else if(command == "visualize") {
+          print("visualizing...");
+          APIService.visualize(circledText);
+        }else if(command == "?") {
+          print("questioning...");
+          APIService.question(circledText, recognizedText);
         }
 
         clearPad();
