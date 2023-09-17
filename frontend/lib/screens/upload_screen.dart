@@ -31,6 +31,7 @@ class UploadScreen extends StatelessWidget {
               width: width,
               height: height,
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   Expanded(

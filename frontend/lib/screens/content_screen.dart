@@ -298,7 +298,7 @@ class _ContentScreenState extends State<ContentScreen>
               children: [
                 Text(
                     "This is an example of a long text. It can span multiple lines."),
-                Image.network('https://example.com/path/to/your/image.png'),
+                // Image.network('https://example.com/path/to/your/image.png'),
                 Text("Another piece of text."),
               ],
             ),
@@ -308,7 +308,7 @@ class _ContentScreenState extends State<ContentScreen>
     );
 
     Overlay.of(context).insert(overlayEntry);
-  }
+  } 
 }
 
 class NotePainter extends CustomPainter {
