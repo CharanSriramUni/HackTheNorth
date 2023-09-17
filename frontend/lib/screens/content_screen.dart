@@ -148,22 +148,21 @@ class _ContentScreenState extends State<ContentScreen> {
                       recognizerProvider.recognizeText();
                     } else {
                       circledPoints = [...points];
+                      Rect largest = findLargestCircumscribedRectangle(circledPoints);
+                      var bytes = await capture(largest);
+                      var recognizedText = await TextRecognitionService.recognizeText(bytes!);
+                      print(recognizedText);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute<void>(
+                          builder: (BuildContext ctx) => ImageScreen(
+                            imageBytes: bytes,
+                          ),
+                        ),
+                      );
+                      circled = true;
                     }
 
-                    circled = true;
-
-                    Rect largest = findLargestCircumscribedRectangle(circledPoints);
-                    var bytes = await capture(largest);
-                    var recognizedText = await TextRecognitionService.recognizeText(bytes!);
-                    print(recognizedText);
-                    Navigator.push(
-                          context,
-                          MaterialPageRoute<void>(
-                            builder: (BuildContext ctx) => ImageScreen(
-                              imageBytes: bytes,
-                            ),
-                          ),
-                        );
                   },
                   child: CustomPaint(
                     painter: NotePainter(points),

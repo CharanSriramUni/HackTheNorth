@@ -25,8 +25,8 @@ class CommandRecognizerProvider extends ChangeNotifier {
       candidates.sort((a, b) => a.score - b.score > 0 ? 1 : -1);
       recognizedText = candidates.first.text;
       print(recognizedText);
-      String command = commands.singleWhere((element) =>
-        element == recognizedText.toLowerCase().replaceAll(' ', ''),
+      String command = commands.singleWhere((command) =>
+        recognizedText.toLowerCase().replaceAll(' ', '').contains(command),
         orElse: () => ''
       );
       if (command.isNotEmpty) {
