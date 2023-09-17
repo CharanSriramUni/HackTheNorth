@@ -309,40 +309,6 @@ class _ContentScreenState extends State<ContentScreen>
 
     Overlay.of(context).insert(overlayEntry);
   }
-
-  // Future<Uint8List?> captureRectangle(Rect captureRect) async {
-  //   try {
-  //     RenderRepaintBoundary boundary = repaintBoundaryKey.currentContext!
-  //         .findRenderObject() as RenderRepaintBoundary;
-  //     ui.Image fullImage = await boundary.toImage(pixelRatio: 1.0);
-
-  //     // Crop the image
-  //     final recorder = ui.PictureRecorder();
-  //     final canvas = Canvas(
-  //         recorder,
-  //         Rect.fromPoints(
-  //             Offset(0, 0), captureRect.bottomRight - captureRect.topLeft));
-  //     canvas.drawImageRect(
-  //         fullImage,
-  //         captureRect,
-  //         Rect.fromPoints(
-  //             Offset(0, 0), captureRect.size.bottomRight(Offset.zero)),
-  //         Paint());
-
-  //     final picture = recorder.endRecording();
-  //     final croppedImage = await picture.toImage(
-  //         captureRect.width.toInt(), captureRect.height.toInt());
-
-  //     ByteData? byteData =
-  //         await croppedImage.toByteData(format: ui.ImageByteFormat.png);
-  //     if (byteData != null) {
-  //       return byteData.buffer.asUint8List();
-  //     }
-  //   } catch (e) {
-  //     print(e);
-  //   }
-  //   return null;
-  // }
 }
 
 class NotePainter extends CustomPainter {
