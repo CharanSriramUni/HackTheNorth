@@ -5,10 +5,13 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:google_mlkit_digital_ink_recognition/google_mlkit_digital_ink_recognition.dart';
+import 'package:hackthenotes/providers/command_recognizer_provider.dart';
 import 'package:hackthenotes/screens/image_screen.dart';
 import 'package:hackthenotes/utils/colors.dart';
 import 'package:hackthenotes/utils/style_constants.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:bitmap/bitmap.dart';
 
@@ -21,7 +24,9 @@ class ContentScreen extends StatefulWidget {
 
 class _ContentScreenState extends State<ContentScreen> {
   List<Offset?> points = [];
+  List<Offset?> circledPoints = [];
   var isUsingStylus = false;
+  var circled = false;
   var xPadding = StyleConstants.width * 0.05;
   static const yPadding = 78.0;
   late WebViewController webViewController;
@@ -54,6 +59,8 @@ class _ContentScreenState extends State<ContentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    var recognizerProvider = context.watch<CommandRecognizerProvider>();
+
     return Scaffold(
       backgroundColor: TWColors.slate100,
       appBar: AppBar(
@@ -100,25 +107,56 @@ class _ContentScreenState extends State<ContentScreen> {
               if (isUsingStylus)
                 GestureDetector(
                   behavior: HitTestBehavior.translucent,
+                  onPanStart: (details) {
+                    if (circled) {
+                      recognizerProvider.ink.strokes.add(Stroke());
+                    }
+                  },
                   onPanUpdate: (details) {
                     setState(() {
                       points.add(details.localPosition);
+
+                      if (circled) {
+                        final RenderObject? object = context.findRenderObject();
+                        final localPosition = (object as RenderBox?)
+                            ?.globalToLocal(details.localPosition);
+                        if (localPosition != null) {
+                          recognizerProvider.points =
+                              List.from(recognizerProvider.points)
+                                ..add(StrokePoint(
+                                  x: localPosition.dx,
+                                  y: localPosition.dy,
+                                  t: DateTime.now().millisecondsSinceEpoch,
+                                ));
+                        }
+                        if (recognizerProvider.ink.strokes.isNotEmpty) {
+                          recognizerProvider.ink.strokes.last.points =
+                              recognizerProvider.points.toList();
+                        }
+                      }
                     });
                   },
                   onPanEnd: (details) async {
                     points.add(null);
-                    Rect largest = findLargestCircumscribedRectangle(points);
+                    if (circled) {
+                      recognizerProvider.points.clear();
+                      recognizerProvider.recognizeText();
+                    } else {
+                      circledPoints = [...points];
+                    }
 
-                    // Rect rect = Rect.fromLTRB(0, 0, 500, 500);
-                    var bytes = await capture(largest);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute<void>(
-                        builder: (BuildContext ctx) => ImageScreen(
-                          imageBytes: bytes,
-                        ),
-                      ),
-                    );
+                    circled = true;
+
+                    // Rect largest = findLargestCircumscribedRectangle(circledPoints);
+                    // var bytes = await capture(largest);
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute<void>(
+                    //     builder: (BuildContext ctx) => ImageScreen(
+                    //       imageBytes: bytes,
+                    //     ),
+                    //   ),
+                    // );
                   },
                   child: CustomPaint(
                     painter: NotePainter(points),
