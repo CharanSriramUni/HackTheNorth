@@ -1,3 +1,4 @@
+import  { getBingImage } from './generateImage';
 import { spawnSync } from 'child_process';
 import express from 'express';
 import WebSocket from 'ws';
@@ -17,6 +18,9 @@ const SUMMARY_PROMPT = `
     If you have context that you know to be relevant, you may bring it in. Do NOT invent information.
     Do NOT start your response with "Summary of passage: " or anything like it.
 `
+
+let age_prompt = ''
+
 
 // Initalize services
 const app = express();
@@ -57,7 +61,16 @@ app.get('/init-document', async (req, res) => {
         return;
     }
 })
-
+app.post('/age', async (req, res) => {
+    const { age } = req.body;
+    if(age == "child") {
+        age_prompt = "Answer as if you are speaking to a child. ";
+    }else if(age == "teen") {
+        age_prompt = "Answer as if you are writing to a teenager. ";
+    }else {
+        age_prompt = '';
+    }
+});
 app.post('/summarize', async (req, res) => {
     const { selected_text } = req.body;
     
@@ -75,7 +88,7 @@ app.post('/summarize', async (req, res) => {
     // Make the query to Open AI
     const completion = await openai.chat.completions.create({
         messages: [
-            {role: "system", content: SUMMARY_PROMPT},
+            {role: "system", content: age_prompt+SUMMARY_PROMPT},
             {role: "user", content: condensed_text}
         ],
         model: 'gpt-4'
