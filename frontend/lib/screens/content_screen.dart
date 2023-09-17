@@ -55,25 +55,37 @@ class _ContentScreenState extends State<ContentScreen>
       ..setBackgroundColor(TWColors.slate100)
       ..setNavigationDelegate(
         NavigationDelegate(
-          onProgress: (int progress) {
-            // Update loading bar.
-          },
-          onPageStarted: (String url) {},
-          onPageFinished: (String url) {},
-          onWebResourceError: (WebResourceError error) {},
-          onNavigationRequest: (NavigationRequest request) {
-            return NavigationDecision.navigate;
-          },
+          // onProgress: (int progress) async {
+          //   // Update loading bar.
+          //   if(progress == 100) {
+          //     await Future.delayed(Duration(milliseconds: 100));
+          //
+          //   }
+          // },
         ),
       );
     super.initState();
   }
 
   @override
-  void didChangeDependencies() {
+  Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
-    webViewController
-        .loadHtmlString(context.watch<WSListenerProvider>().document);
+    await webViewController.loadHtmlString(Provider
+        .of<WSListenerProvider>(context)
+        .document).whenComplete(() async {
+      Offset offset = Provider
+          .of<WSListenerProvider>(context, listen: false)
+          .offset;
+      await Future.delayed(Duration(milliseconds: 100));
+      await webViewController.scrollTo(offset.dx.floor(), offset.dy.floor());
+      await Future.delayed(Duration(milliseconds: 200));
+      setState(() {
+        points.clear();
+        circledPoints.clear();
+        isUsingStylus = false;
+        circled = false;
+      });
+    });
   }
 
   @override
@@ -81,12 +93,10 @@ class _ContentScreenState extends State<ContentScreen>
     animationController
         .dispose(); // Always dispose of your AnimationController to free up resources.
     super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     var recognizerProvider = context.read<CommandRecognizerProvider>();
-
     return Scaffold(
       backgroundColor: TWColors.slate100,
       appBar: AppBar(
@@ -179,7 +189,8 @@ class _ContentScreenState extends State<ContentScreen>
                     showInfoDialog(Container());
                     if (circled) {
                       recognizerProvider.points.clear();
-                      recognizerProvider.recognizeText();
+                      Provider.of<WSListenerProvider>(context, listen: false).setOffset(webViewController.getScrollPosition());
+                      await recognizerProvider.recognizeText();
                     } else {
                       circledPoints = [...points];
                       Rect largest =

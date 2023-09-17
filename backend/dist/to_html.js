@@ -43,6 +43,8 @@ else
                 page.evaluate(function(){
                     var nodeList=document.getElementsByTagName("*");
 
+                    console.log("hey charan, we found this many elements: ", nodeList.length)
+
                     var arrEventHandlerAttributes=[
                         "onblur", "onchange", "onclick", "ondblclick", "onfocus", "onkeydown", "onkeyup", "onkeypress", "onkeyup","onload",
                         "onmousedown", "onmousemove", "onmouseout", "onmouseover", "onmouseup", "onreset", "onselect", "onsubmit", "onunload"
@@ -211,6 +213,8 @@ else
                             //what can be done about it?
                         }
                     }
+                    
+                    console.log('hey charan, we are done with the loop');
                 });
 
                 require("fs").write(output, page.content, "w");

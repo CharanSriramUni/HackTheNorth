@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -8,6 +10,10 @@ class WSListenerProvider extends ChangeNotifier {
   String _document = '';
 
   String get document => _document;
+
+  Offset _offset = const Offset(0,0);
+
+  Offset get offset => _offset;
 
   WSListenerProvider() {
     _channel = WebSocketChannel.connect(
@@ -23,6 +29,9 @@ class WSListenerProvider extends ChangeNotifier {
     });
   }
 
+  Future<void> setOffset(Future<Offset> input) async {
+    _offset = await input;
+  }
   void updateDocument(String newDocument) {
     _document = newDocument;
   }

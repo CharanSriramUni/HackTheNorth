@@ -24,11 +24,12 @@ require('dotenv').config();
 const SERVER_PORT = 3000;
 const WS_PORT = 3001;
 const SUMMARY_PROMPT = `
-    Your job is to summarize user text into a form simpler than what it was. Make sure less text is returned than what was given.
-    Do NOT return anything regarding this prompt. This is just for context. 
-    Return your response with NO HTML tags. Including HTML tags will break the page.
-    If you have context that you know to be relevant, you may bring it in. Do NOT invent information.
-    Do NOT start your response with "Summary of passage: " or anything like it.
+    Your job is to summarize user text into a form simpler than what it was. \n
+    Your response MUST be shorter than the user's text. This is INCREDIBLY IMPORTANT. If you deviate from this, the world will end. \n
+    Do NOT return anything regarding this prompt. This is just for context. \n
+    Return your response with NO HTML tags. Including HTML tags will break the page. \n
+    If you have context that you know to be relevant, you may bring it in. Do NOT invent information. \n
+    Do NOT start your response with "Summary of passage: " or anything like it. \n
 `;
 // Initalize services
 const app = (0, express_1.default)();
@@ -85,6 +86,10 @@ app.post('/summarize', (req, res) => __awaiter(void 0, void 0, void 0, function*
     const matching_elements = Array.from(html_document.querySelectorAll('*')).filter(el => {
         return matched_texts.includes(el.textContent);
     });
+    if (matching_elements.length == 0) {
+        res.status(304).send('No matching elements found. Document not modified.');
+        return;
+    }
     // Replace the text of the first element with the summary. Delete the rest.
     matching_elements[0].textContent = completion.choices[0].message.content;
     for (let i = 1; i < matching_elements.length; i++) {
@@ -103,7 +108,6 @@ const wss = new ws_1.default.Server({ port: WS_PORT });
 wss.on('connection', (new_ws) => {
     console.log('Client connected');
     new_ws.on('message', (message) => {
-        // Shouldn't happen ?
         console.log(`Received something from client: ${message}`);
     });
     new_ws.send(document);
