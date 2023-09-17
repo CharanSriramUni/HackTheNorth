@@ -33,7 +33,7 @@ const getSearchLinks = (query) => __awaiter(void 0, void 0, void 0, function* ()
     let links = [];
     $('.yuRUbf').each((index, element) => {
         const link = $(element).find("a").attr('href');
-        if (link && links.length < 2) {
+        if (link && links.length < 1) {
             links.push(link);
         }
     });
