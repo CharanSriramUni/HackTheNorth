@@ -34,8 +34,8 @@ class UploadScreen extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Expanded(
-                    flex: 5,
+                  SizedBox(
+                    height: height * 5 / 9,
                     child: Padding(
                       padding: EdgeInsets.only(
                         left: width * 0.2,
@@ -45,8 +45,8 @@ class UploadScreen extends StatelessWidget {
                       child: SvgPicture.asset('assets/notes.svg'),
                     ),
                   ),
-                  Expanded(
-                    flex: 4,
+                  SizedBox(
+                    height: height * 4 / 9,
                     child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: width * 0.08),
                       child: Column(

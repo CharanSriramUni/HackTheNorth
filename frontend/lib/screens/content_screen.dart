@@ -28,10 +28,7 @@ class ContentScreen extends StatefulWidget {
   State<ContentScreen> createState() => _ContentScreenState();
 }
 
-class _ContentScreenState extends State<ContentScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController animationController;
-
+class _ContentScreenState extends State<ContentScreen> {
   List<Offset?> points = [];
   List<Offset?> circledPoints = [];
   var isUsingStylus = false;
@@ -52,11 +49,6 @@ class _ContentScreenState extends State<ContentScreen>
 
   @override
   void initState() {
-    animationController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-
     webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(TWColors.slate100)
@@ -92,12 +84,6 @@ class _ContentScreenState extends State<ContentScreen>
         circled = false;
       });
     });
-  }
-
-  @override
-  void dispose() {
-    animationController.dispose();
-    super.dispose();
   }
 
   @override
@@ -201,7 +187,6 @@ class _ContentScreenState extends State<ContentScreen>
                   },
                   onPanEnd: (details) async {
                     points.add(null);
-                    showInfoDialog(Container());
                     if (circled) {
                       recognizerProvider.points.clear();
                       Provider.of<WSListenerProvider>(context, listen: false)
@@ -285,30 +270,6 @@ class _ContentScreenState extends State<ContentScreen>
       return null;
     }
   }
-
-  void showInfoDialog(Widget widget) {
-    OverlayEntry overlayEntry = OverlayEntry(
-      builder: (context) => ScaleTransition(
-        scale: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-          parent: animationController,
-          curve: Curves.elasticOut,
-        )),
-        child: LookupDialog(
-            content: Column(
-              children: [
-                Text(
-                    "This is an example of a long text. It can span multiple lines."),
-                // Image.network('https://example.com/path/to/your/image.png'),
-                Text("Another piece of text."),
-              ],
-            ),
-            targetPosition: Offset(100, 200) // adjust the position as needed
-            ),
-      ),
-    );
-
-    Overlay.of(context).insert(overlayEntry);
-  } 
 }
 
 class NotePainter extends CustomPainter {
