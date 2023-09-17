@@ -64,7 +64,7 @@ function generateContext(query) {
         let links = [];
         while (links.length == 0 || text.length == 0) {
             text = "";
-            links = yield getSearchLinks("javascript");
+            links = yield getSearchLinks(query);
             for (const link of links) {
                 const newText = yield scrapeContent(link);
                 text += newText + " ";
