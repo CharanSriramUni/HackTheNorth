@@ -41,7 +41,6 @@ class CommandRecognizerProvider extends ChangeNotifier {
 
         clearPad();
       }
-      notifyListeners();
     } catch (e) {
       print(e);
     }
