@@ -4,6 +4,7 @@ const fs = require('fs');
 const ws = new WebSocket('ws://localhost:3001');
 
 ws.on('open', () => {
+    fs.writeFileSync('./test.html', '');
     console.log('Connected to the WebSocket server.');
 });
 
