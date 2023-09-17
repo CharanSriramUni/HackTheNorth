@@ -73,20 +73,20 @@ app.post('/summarize', (req, res) => __awaiter(void 0, void 0, void 0, function*
     const matched_texts = all_texts.filter(text => fuzzy.get(text));
     const condensed_text = matched_texts.join(' ');
     // Make the query to Open AI
-    // const completion = await openai.chat.completions.create({
-    //     messages: [
-    //         {role: "system", content: SUMMARY_PROMPT},
-    //         {role: "user", content: condensed_text}
-    //     ],
-    //     model: 'gpt-4-32k'
-    // })
+    const completion = yield openai.chat.completions.create({
+        messages: [
+            { role: "system", content: SUMMARY_PROMPT },
+            { role: "user", content: condensed_text }
+        ],
+        model: 'gpt-4-32k'
+    });
+    console.log("Summary of passage: ", completion);
     // Now that we have the matched texts, find the elements they correspond to
     const matching_elements = Array.from(html_document.querySelectorAll('*')).filter(el => {
         if (matched_texts.includes(el.textContent))
             console.log(el.textContent);
         return matched_texts.includes(el.textContent);
     });
-    console.log("hey! " + matching_elements.length);
     // Replace the text of the first element with the summary. Delete the rest.
     matching_elements[0].textContent = "Hey Charan! This is working spectacularly.";
     for (let i = 1; i < matching_elements.length; i++) {
