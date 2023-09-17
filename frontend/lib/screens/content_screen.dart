@@ -55,14 +55,14 @@ class _ContentScreenState extends State<ContentScreen>
       ..setBackgroundColor(TWColors.slate100)
       ..setNavigationDelegate(
         NavigationDelegate(
-          // onProgress: (int progress) async {
-          //   // Update loading bar.
-          //   if(progress == 100) {
-          //     await Future.delayed(Duration(milliseconds: 100));
-          //
-          //   }
-          // },
-        ),
+            // onProgress: (int progress) async {
+            //   // Update loading bar.
+            //   if(progress == 100) {
+            //     await Future.delayed(Duration(milliseconds: 100));
+            //
+            //   }
+            // },
+            ),
       );
     super.initState();
   }
@@ -70,12 +70,11 @@ class _ContentScreenState extends State<ContentScreen>
   @override
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
-    await webViewController.loadHtmlString(Provider
-        .of<WSListenerProvider>(context)
-        .document).whenComplete(() async {
-      Offset offset = Provider
-          .of<WSListenerProvider>(context, listen: false)
-          .offset;
+    await webViewController
+        .loadHtmlString(Provider.of<WSListenerProvider>(context).document)
+        .whenComplete(() async {
+      Offset offset =
+          Provider.of<WSListenerProvider>(context, listen: false).offset;
       await Future.delayed(Duration(milliseconds: 100));
       await webViewController.scrollTo(offset.dx.floor(), offset.dy.floor());
       await Future.delayed(Duration(milliseconds: 200));
@@ -90,9 +89,9 @@ class _ContentScreenState extends State<ContentScreen>
 
   @override
   void dispose() {
-    animationController
-        .dispose(); // Always dispose of your AnimationController to free up resources.
+    animationController.dispose();
     super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -189,7 +188,8 @@ class _ContentScreenState extends State<ContentScreen>
                     showInfoDialog(Container());
                     if (circled) {
                       recognizerProvider.points.clear();
-                      Provider.of<WSListenerProvider>(context, listen: false).setOffset(webViewController.getScrollPosition());
+                      Provider.of<WSListenerProvider>(context, listen: false)
+                          .setOffset(webViewController.getScrollPosition());
                       await recognizerProvider.recognizeText();
                     } else {
                       circledPoints = [...points];
