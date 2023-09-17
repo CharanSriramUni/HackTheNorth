@@ -40,7 +40,7 @@ class _ContentScreenState extends State<ContentScreen> {
   final GlobalKey repaintBoundaryKey = GlobalKey();
   final platform = MethodChannel('com.example.screenshot_channel');
 
-  int age = 0;
+  int age = 2;
   List<IconData> ageIcons = [
     Icons.child_friendly_outlined,
     Icons.school_outlined,
