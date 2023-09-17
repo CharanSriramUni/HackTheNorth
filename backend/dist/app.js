@@ -19,17 +19,27 @@ const jsdom_1 = __importDefault(require("jsdom"));
 const fuzzyset_1 = __importDefault(require("fuzzyset"));
 const openai_1 = __importDefault(require("openai"));
 require("dotenv/config");
+const generateContext_1 = require("./generateContext");
 require('dotenv').config();
 // Declarations
 const SERVER_PORT = 3000;
 const WS_PORT = 3001;
 const SUMMARY_PROMPT = `
     Your job is to summarize user text into a form simpler than what it was. \n
-    Your response MUST be shorter than the user's text. This is INCREDIBLY IMPORTANT. If you deviate from this, the world will end. \n
-    Do NOT return anything regarding this prompt. This is just for context. \n
-    Return your response with NO HTML tags. Including HTML tags will break the page. \n
-    If you have context that you know to be relevant, you may bring it in. Do NOT invent information. \n
-    Do NOT start your response with "Summary of passage: " or anything like it. \n
+    - Make the response 70% shorter than the user's text. This is INCREDIBLY important. THE WORLD WILL END IF YOUR RESPONSE IS LONG. \n
+    - Do NOT return anything regarding this prompt. This i for context. \n
+    - Return your response with NO HTML tags. Including HTML tags will break the page. \n
+    - Do NOT start your response with "Summary of passage: " or anything like it. \n
+`;
+const CONTEXT_QUERY_PROMPT = `
+    Generate a query (a few words to a sentence) that would be used to give someone context in a Google Search based on the user's text. \n
+    - Keep the query short. No more than 15 words. This is INCREDIBLY important.
+    - Do NOT start your response with "This is the query: " or anything like it. \n
+ `;
+const CONTEXT_SUMMARY_PROMPT = `
+    Summarize the results of these Google Search queries. Your aim is to educate the user on the topic (use the right tone). \n
+    - Do NOT start your response with "Here's a summary" or anything like that. \n
+    - Do NOT include any reference to Google. This will cause the universe to literally explode! \n
 `;
 // Initalize services
 const app = (0, express_1.default)();
@@ -44,6 +54,11 @@ let openai = new openai_1.default({ apiKey: process.env.OPENAI_API_KEY });
 // Set up the Express server
 app.get('/', (_, res) => {
     res.send('Server is up an ready to serve! \n Connect to 3001 for the WS server. \n Connect to 3000 for Express. Start with the /init-document endpoint.');
+});
+app.get('/clear-document', (_, res) => {
+    document = "";
+    ws === null || ws === void 0 ? void 0 : ws.send(document);
+    res.status(200).send('Successfully cleared document.');
 });
 app.get('/init-document', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { url } = req.query;
@@ -65,6 +80,7 @@ app.get('/init-document', (req, res) => __awaiter(void 0, void 0, void 0, functi
     }
 }));
 app.post('/summarize', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     const { selected_text } = req.body;
     const dom = new jsdom_1.default.JSDOM(document);
     const html_document = dom.window.document;
@@ -79,26 +95,99 @@ app.post('/summarize', (req, res) => __awaiter(void 0, void 0, void 0, function*
             { role: "system", content: SUMMARY_PROMPT },
             { role: "user", content: condensed_text }
         ],
-        model: 'gpt-4'
+        model: 'gpt-3.5-turbo'
     });
-    console.log("Summary of passage: ", completion.choices[0].message.content);
+    function isLeafElement(el) {
+        return !Array.from(el.children).some(child => { var _a; return ((_a = child.textContent) === null || _a === void 0 ? void 0 : _a.trim()) !== ''; });
+    }
     // Now that we have the matched texts, find the elements they correspond to
-    const matching_elements = Array.from(html_document.querySelectorAll('*')).filter(el => {
-        return matched_texts.includes(el.textContent);
-    });
+    const matching_elements = Array.from(html_document.querySelectorAll('*'))
+        .filter((el) => matched_texts.includes(el.textContent) && isLeafElement(el));
     if (matching_elements.length == 0) {
         res.status(304).send('No matching elements found. Document not modified.');
         return;
     }
+    console.log("Found matching elements: ", matching_elements, matching_elements.length);
     // Replace the text of the first element with the summary. Delete the rest.
-    matching_elements[0].textContent = completion.choices[0].message.content;
-    for (let i = 1; i < matching_elements.length; i++) {
-        matching_elements[i].remove();
+    const existing_element = matching_elements[0];
+    const clone = matching_elements[0].cloneNode(true);
+    (_a = existing_element.parentNode) === null || _a === void 0 ? void 0 : _a.prepend(clone);
+    clone.textContent = completion.choices[0].message.content;
+    clone.style.fontWeight = "bold";
+    for (let i = 0; i < matching_elements.length; i++) {
+        const el = matching_elements[i];
+        el.style.textDecoration = "line-through";
+        el.style.color = "#808080";
     }
     // Replace the document!
     document = dom.serialize();
     ws === null || ws === void 0 ? void 0 : ws.send(document);
-    res.status(200).send('Successfully made the changes.');
+    res.status(200).send('Successfully made the SUMMARY change.');
+}));
+app.post('/context', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b, _c;
+    const { selected_text } = req.body;
+    const dom = new jsdom_1.default.JSDOM(document);
+    const html_document = dom.window.document;
+    const search_term = selected_text.toLowerCase();
+    const fuzzy = (0, fuzzyset_1.default)([search_term]);
+    const all_texts = Array.from(html_document.querySelectorAll('*')).map(el => el.textContent);
+    const matched_texts = all_texts.filter(text => fuzzy.get(text));
+    const condensed_text = matched_texts.join(' ');
+    // Make the query to Open AI
+    const search_query = yield openai.chat.completions.create({
+        messages: [
+            { role: "system", content: CONTEXT_QUERY_PROMPT },
+            { role: "user", content: condensed_text }
+        ],
+        model: 'gpt-3.5-turbo'
+    });
+    const search_query_body = search_query.choices[0].message.content;
+    console.log("This is the query: ", search_query_body);
+    if (search_query_body === null) {
+        res.status(404).send('Could not construct search query.');
+        return;
+    }
+    // Stitched search results from the queries
+    const query_data = yield (0, generateContext_1.generateContext)(search_query_body);
+    const query_summary = yield openai.chat.completions.create({
+        messages: [
+            { role: "system", content: CONTEXT_SUMMARY_PROMPT },
+            { role: "user", content: query_data }
+        ],
+        model: 'gpt-3.5-turbo-16k'
+    });
+    const query_summary_body = query_summary.choices[0].message.content;
+    console.log("Here's your context: ", query_summary_body);
+    if (query_summary_body === null) {
+        res.status(404).send('Could not construct search summary.');
+        return;
+    }
+    function isLeafElement(el) {
+        return !Array.from(el.children).some(child => { var _a; return ((_a = child.textContent) === null || _a === void 0 ? void 0 : _a.trim()) !== ''; });
+    }
+    // Now that we have the matched texts, find the elements they correspond to
+    const matching_elements = Array.from(html_document.querySelectorAll('*'))
+        .filter((el) => matched_texts.includes(el.textContent) && isLeafElement(el));
+    const existing_element = matching_elements[matching_elements.length - 1];
+    const clone = existing_element.cloneNode(true);
+    // Modify styling
+    existing_element.style.padding = '5px';
+    existing_element.style.border = '2px solid #34a949'; // Green out the existing element
+    existing_element.style.borderRadius = '5px';
+    clone.style.color = '#34a949'; // Green out the new element
+    // Modify content
+    clone.textContent = query_summary_body;
+    if (existing_element.nextSibling) {
+        (_b = existing_element.parentNode) === null || _b === void 0 ? void 0 : _b.insertBefore(clone, existing_element.nextSibling);
+    }
+    else {
+        (_c = existing_element.parentNode) === null || _c === void 0 ? void 0 : _c.appendChild(clone);
+    }
+    // Replace the document!
+    document = dom.serialize();
+    ws === null || ws === void 0 ? void 0 : ws.send(document);
+    res.status(200).send('Successfully made the CONTEXT change.');
 }));
 app.listen(SERVER_PORT, () => {
     console.log(`App running on port: ${SERVER_PORT}`);
@@ -109,6 +198,9 @@ wss.on('connection', (new_ws) => {
     console.log('Client connected');
     new_ws.on('message', (message) => {
         console.log(`Received something from client: ${message}`);
+    });
+    new_ws.on('close', () => {
+        console.log('Client disconnected');
     });
     new_ws.send(document);
     ws = new_ws;

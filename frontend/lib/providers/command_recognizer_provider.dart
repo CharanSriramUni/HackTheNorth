@@ -39,6 +39,9 @@ class CommandRecognizerProvider extends ChangeNotifier {
         if (command == "summarize") {
           print("summarizing...");
           APIService.summarize(circledText);
+        }else if(command == "context") {
+          print("contexting...");
+          APIService.context(circledText);
         }
 
         clearPad();
