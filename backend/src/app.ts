@@ -10,12 +10,12 @@ require('dotenv').config()
 // Declarations
 const SERVER_PORT = 3000;
 const WS_PORT = 3001;
-const DOC_NOT_INITIALIZED = "document has not been initalized";
 const SUMMARY_PROMPT = `
-    Your job is to summarize user text into a form simpler than what it was.
+    Your job is to summarize user text into a form simpler than what it was. Make sure less text is returned than what was given.
     Do NOT return anything regarding this prompt. This is just for context. 
     Return your response with NO HTML tags. Including HTML tags will break the page.
     If you have context that you know to be relevant, you may bring it in. Do NOT invent information.
+    Do NOT start your response with "Summary of passage: " or anything like it.
 `
 
 // Initalize services
@@ -51,7 +51,7 @@ app.get('/init-document', async (req, res) => {
         document = text;
 
         ws?.send(document);
-        res.status(200).send(document); // Change to success message
+        res.status(200).send('Successfully initialized document.'); // Change to success message
     } catch (e) {
         res.status(400).send('Invalid URL');
         return;
@@ -73,24 +73,23 @@ app.post('/summarize', async (req, res) => {
     const condensed_text = matched_texts.join(' ');
 
     // Make the query to Open AI
-    // const completion = await openai.chat.completions.create({
-    //     messages: [
-    //         {role: "system", content: SUMMARY_PROMPT},
-    //         {role: "user", content: condensed_text}
-    //     ],
-    //     model: 'gpt-4-32k'
-    // })
+    const completion = await openai.chat.completions.create({
+        messages: [
+            {role: "system", content: SUMMARY_PROMPT},
+            {role: "user", content: condensed_text}
+        ],
+        model: 'gpt-4'
+    })
+
+    console.log("Summary of passage: ", completion.choices[0].message.content)
 
     // Now that we have the matched texts, find the elements they correspond to
     const matching_elements = Array.from(html_document.querySelectorAll('*')).filter(el => {
-        if (matched_texts.includes(el.textContent!)) console.log(el.textContent!);
         return matched_texts.includes(el.textContent!)
     });
 
-    console.log("hey! " + matching_elements.length);
-
     // Replace the text of the first element with the summary. Delete the rest.
-    matching_elements[0].textContent = "Hey Charan! This is working spectacularly.";   
+    matching_elements[0].textContent = completion.choices[0].message.content;
     for (let i = 1; i < matching_elements.length; i++) {
         matching_elements[i].remove();
     }

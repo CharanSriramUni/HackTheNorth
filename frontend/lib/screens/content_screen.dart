@@ -17,6 +17,7 @@ import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:bitmap/bitmap.dart';
 
+import '../providers/ws_listener_provider.dart';
 import '../services/text_recognition_service.dart';
 
 class ContentScreen extends StatefulWidget {
@@ -63,10 +64,14 @@ class _ContentScreenState extends State<ContentScreen>
             return NavigationDecision.navigate;
           },
         ),
-      )
-      ..loadRequest(Uri.parse(
-          'https://www.nytimes.com/2023/09/16/business/electric-vehicles-uaw-gm-ford-stellantis.html?unlocked_article_code=LbBkrpXQeRrFaUUNJCm85oNptoSBI8fAI6huOMqQadsL_BI46XqjB8VYxtwofVlkLToHT_Pt3FgI71Ti4cTrFgHLU0D0iUzjOXhOgnnmRMdhKX_wEVNHDGkJwTq5HMrDmNdK47KmgWSGFs_9SEybIdz6DFC3GmX_1L-MlgJSEQXqO4QlzzhDNRK4HJEf7weHS4yj2aaJ2oaPKkOcsD2Q7fCv20h6PhoTuO1YOnHLMlKQ4VS7ZDCGDWnMCwNgVl6klfmGgDjS1ykUNPzqS0VMRwRSGEglSWfB4PaydvlIpCWpBIEyL16ZDeZ7VBGj6h5MFMQosHv8D8rPyTH9gM8DuK5uDDTvcuDyxisCl_r-Ep8HZ54&smid=url-share'));
+      );
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    webViewController.loadHtmlString(context.watch<WSListenerProvider>().document);
   }
 
   @override
@@ -78,7 +83,7 @@ class _ContentScreenState extends State<ContentScreen>
 
   @override
   Widget build(BuildContext context) {
-    var recognizerProvider = context.watch<CommandRecognizerProvider>();
+    var recognizerProvider = context.read<CommandRecognizerProvider>();
 
     return Scaffold(
       backgroundColor: TWColors.slate100,
@@ -171,14 +176,7 @@ class _ContentScreenState extends State<ContentScreen>
                       var recognizedText =
                           await TextRecognitionService.recognizeText(bytes!);
                       print(recognizedText);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute<void>(
-                          builder: (BuildContext ctx) => ImageScreen(
-                            imageBytes: bytes,
-                          ),
-                        ),
-                      );
+                      Provider.of<CommandRecognizerProvider>(context, listen: false).circledText = recognizedText;
                       circled = true;
                     }
                   },

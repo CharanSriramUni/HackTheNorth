@@ -1,8 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_digital_ink_recognition/google_mlkit_digital_ink_recognition.dart';
 
+import '../services/api_service.dart';
+
 class CommandRecognizerProvider extends ChangeNotifier {
 
+  String circledText = "";
   final List<String> commands = ['summarize', 'context',  'visualize'];
 
   final String language = 'en-US';
@@ -31,6 +34,12 @@ class CommandRecognizerProvider extends ChangeNotifier {
       );
       if (command.isNotEmpty) {
         // run command
+        if(command == "summarize") {
+          print("summarizing...");
+          APIService.summarize(circledText);
+        }
+
+        clearPad();
       }
       notifyListeners();
     } catch (e) {
