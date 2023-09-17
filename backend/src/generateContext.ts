@@ -21,7 +21,7 @@ const getSearchLinks = async (query: string) => {
     let links: string[] = []
     $('.yuRUbf').each((index, element) => {
         const link = $(element).find("a").attr('href')
-        if(link && links.length < 2){
+        if(link && links.length < 1){
             links.push(link)
         }
     });
@@ -52,7 +52,7 @@ export async function generateContext(query: string) {
 
     while(links.length == 0 || text.length == 0) {
         text = ""
-        links = await getSearchLinks("javascript")
+        links = await getSearchLinks(query)
         for(const link of links) {
             const newText = await scrapeContent(link)
             text += newText + " "
