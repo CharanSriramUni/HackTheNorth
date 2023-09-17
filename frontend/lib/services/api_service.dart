@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:http/http.dart';
 import 'package:provider/provider.dart';
 
-
 class APIService {
   static const endPoint = "https://curvy-plums-write.tunnelapp.dev";
   static Future<void> sendURL(String url) async {
@@ -11,9 +10,16 @@ class APIService {
       final response = await get(
         Uri.parse("$apiURL?url=$url"),
       );
-    } catch (e) {
+    } catch (e) {}
+  }
 
-    }
+  static Future<void> clearDoc() async {
+    const String apiURL = "$endPoint/clear-document";
+    try {
+      final response = await get(
+        Uri.parse("$apiURL"),
+      );
+    } catch (e) {}
   }
 
   static Future<void> summarize(String text) async {
@@ -22,13 +28,8 @@ class APIService {
       'selected_text': text,
     };
     try {
-      final response = await post(
-        Uri.parse(apiURL),
-        body: requestBody
-      );
-    } catch (e) {
-
-    }
+      final response = await post(Uri.parse(apiURL), body: requestBody);
+    } catch (e) {}
   }
 
   static Future<void> context(String text) async {
