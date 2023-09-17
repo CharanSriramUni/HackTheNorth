@@ -9,6 +9,7 @@ import 'package:google_mlkit_digital_ink_recognition/google_mlkit_digital_ink_re
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:hackthenotes/providers/command_recognizer_provider.dart';
 import 'package:hackthenotes/screens/image_screen.dart';
+import 'package:hackthenotes/services/api_service.dart';
 import 'package:hackthenotes/widgets/lookup_dialog.dart';
 import 'package:hackthenotes/utils/colors.dart';
 import 'package:hackthenotes/utils/style_constants.dart';
@@ -71,7 +72,8 @@ class _ContentScreenState extends State<ContentScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    webViewController.loadHtmlString(context.watch<WSListenerProvider>().document);
+    webViewController
+        .loadHtmlString(context.watch<WSListenerProvider>().document);
   }
 
   @override
@@ -110,6 +112,16 @@ class _ContentScreenState extends State<ContentScreen>
                     color: NotesColors.black),
           ),
         ],
+        leading: IconButton(
+          icon: const Icon(
+            Ionicons.chevron_back_outline,
+            color: NotesColors.black,
+          ),
+          onPressed: () {
+            // context.read<WSListenerProvider>().updateDocument('');
+            APIService.clearDoc();
+          },
+        ),
         elevation: 0,
       ),
       body: Padding(
@@ -176,7 +188,9 @@ class _ContentScreenState extends State<ContentScreen>
                       var recognizedText =
                           await TextRecognitionService.recognizeText(bytes!);
                       print(recognizedText);
-                      Provider.of<CommandRecognizerProvider>(context, listen: false).circledText = recognizedText;
+                      Provider.of<CommandRecognizerProvider>(context,
+                              listen: false)
+                          .circledText = recognizedText;
                       circled = true;
                     }
                   },
