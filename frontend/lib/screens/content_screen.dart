@@ -9,6 +9,7 @@ import 'package:google_mlkit_digital_ink_recognition/google_mlkit_digital_ink_re
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:hackthenotes/providers/command_recognizer_provider.dart';
 import 'package:hackthenotes/screens/image_screen.dart';
+import 'package:hackthenotes/widgets/lookup_dialog.dart';
 import 'package:hackthenotes/utils/colors.dart';
 import 'package:hackthenotes/utils/style_constants.dart';
 import 'package:ionicons/ionicons.dart';
@@ -25,7 +26,10 @@ class ContentScreen extends StatefulWidget {
   State<ContentScreen> createState() => _ContentScreenState();
 }
 
-class _ContentScreenState extends State<ContentScreen> {
+class _ContentScreenState extends State<ContentScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController animationController;
+
   List<Offset?> points = [];
   List<Offset?> circledPoints = [];
   var isUsingStylus = false;
@@ -39,6 +43,11 @@ class _ContentScreenState extends State<ContentScreen> {
 
   @override
   void initState() {
+    animationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+
     webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(TWColors.slate100)
@@ -58,6 +67,13 @@ class _ContentScreenState extends State<ContentScreen> {
       ..loadRequest(Uri.parse(
           'https://www.nytimes.com/2023/09/16/business/electric-vehicles-uaw-gm-ford-stellantis.html?unlocked_article_code=LbBkrpXQeRrFaUUNJCm85oNptoSBI8fAI6huOMqQadsL_BI46XqjB8VYxtwofVlkLToHT_Pt3FgI71Ti4cTrFgHLU0D0iUzjOXhOgnnmRMdhKX_wEVNHDGkJwTq5HMrDmNdK47KmgWSGFs_9SEybIdz6DFC3GmX_1L-MlgJSEQXqO4QlzzhDNRK4HJEf7weHS4yj2aaJ2oaPKkOcsD2Q7fCv20h6PhoTuO1YOnHLMlKQ4VS7ZDCGDWnMCwNgVl6klfmGgDjS1ykUNPzqS0VMRwRSGEglSWfB4PaydvlIpCWpBIEyL16ZDeZ7VBGj6h5MFMQosHv8D8rPyTH9gM8DuK5uDDTvcuDyxisCl_r-Ep8HZ54&smid=url-share'));
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    animationController
+        .dispose(); // Always dispose of your AnimationController to free up resources.
+    super.dispose();
   }
 
   @override
@@ -143,14 +159,17 @@ class _ContentScreenState extends State<ContentScreen> {
                   },
                   onPanEnd: (details) async {
                     points.add(null);
+                    showInfoDialog(Container());
                     if (circled) {
                       recognizerProvider.points.clear();
                       recognizerProvider.recognizeText();
                     } else {
                       circledPoints = [...points];
-                      Rect largest = findLargestCircumscribedRectangle(circledPoints);
+                      Rect largest =
+                          findLargestCircumscribedRectangle(circledPoints);
                       var bytes = await capture(largest);
-                      var recognizedText = await TextRecognitionService.recognizeText(bytes!);
+                      var recognizedText =
+                          await TextRecognitionService.recognizeText(bytes!);
                       print(recognizedText);
                       Navigator.push(
                         context,
@@ -162,7 +181,6 @@ class _ContentScreenState extends State<ContentScreen> {
                       );
                       circled = true;
                     }
-
                   },
                   child: CustomPaint(
                     painter: NotePainter(points),
@@ -225,6 +243,30 @@ class _ContentScreenState extends State<ContentScreen> {
       print(e.message);
       return null;
     }
+  }
+
+  void showInfoDialog(Widget widget) {
+    OverlayEntry overlayEntry = OverlayEntry(
+      builder: (context) => ScaleTransition(
+        scale: Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+          parent: animationController,
+          curve: Curves.elasticOut,
+        )),
+        child: LookupDialog(
+            content: Column(
+              children: [
+                Text(
+                    "This is an example of a long text. It can span multiple lines."),
+                Image.network('https://example.com/path/to/your/image.png'),
+                Text("Another piece of text."),
+              ],
+            ),
+            targetPosition: Offset(100, 200) // adjust the position as needed
+            ),
+      ),
+    );
+
+    Overlay.of(context).insert(overlayEntry);
   }
 
   // Future<Uint8List?> captureRectangle(Rect captureRect) async {
