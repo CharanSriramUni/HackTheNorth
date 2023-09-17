@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_digital_ink_recognition/google_mlkit_digital_ink_recognition.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:hackthenotes/providers/command_recognizer_provider.dart';
 import 'package:hackthenotes/screens/image_screen.dart';
 import 'package:hackthenotes/utils/colors.dart';
@@ -14,6 +15,8 @@ import 'package:ionicons/ionicons.dart';
 import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:bitmap/bitmap.dart';
+
+import '../services/text_recognition_service.dart';
 
 class ContentScreen extends StatefulWidget {
   const ContentScreen({super.key});
@@ -75,7 +78,9 @@ class _ContentScreenState extends State<ContentScreen> {
             onPressed: () {
               setState(() {
                 points.clear();
+                circledPoints.clear();
                 isUsingStylus = !isUsingStylus;
+                circled = false;
               });
             },
             icon: isUsingStylus
@@ -147,16 +152,18 @@ class _ContentScreenState extends State<ContentScreen> {
 
                     circled = true;
 
-                    // Rect largest = findLargestCircumscribedRectangle(circledPoints);
-                    // var bytes = await capture(largest);
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute<void>(
-                    //     builder: (BuildContext ctx) => ImageScreen(
-                    //       imageBytes: bytes,
-                    //     ),
-                    //   ),
-                    // );
+                    Rect largest = findLargestCircumscribedRectangle(circledPoints);
+                    var bytes = await capture(largest);
+                    var recognizedText = await TextRecognitionService.recognizeText(bytes!);
+                    print(recognizedText);
+                    Navigator.push(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (BuildContext ctx) => ImageScreen(
+                              imageBytes: bytes,
+                            ),
+                          ),
+                        );
                   },
                   child: CustomPaint(
                     painter: NotePainter(points),
@@ -203,6 +210,7 @@ class _ContentScreenState extends State<ContentScreen> {
   }
 
   Future<Uint8List?> capture(Rect rect) async {
+    print("${rect.left} ${rect.top} ${rect.width} ${rect.height}");
     try {
       final List<dynamic> bytes =
           await platform.invokeMethod('captureScreenshot', {

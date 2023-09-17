@@ -9,6 +9,7 @@ class ImageScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(),
       body: Center(
           child: imageBytes != null
               ? Image.memory(imageBytes!)
