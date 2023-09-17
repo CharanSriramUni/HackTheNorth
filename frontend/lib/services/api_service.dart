@@ -30,4 +30,19 @@ class APIService {
 
     }
   }
+
+  static Future<void> context(String text) async {
+    const String apiURL = "$endPoint/context";
+    final Map<String, dynamic> requestBody = {
+      'selected_text': text, // Encode the URL as a string in the request body
+    };
+    try {
+      final response = await post(
+          Uri.parse(apiURL),
+          body: requestBody
+      );
+    } catch (e) {
+
+    }
+  }
 }
