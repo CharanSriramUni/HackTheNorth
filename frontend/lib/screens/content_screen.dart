@@ -104,6 +104,7 @@ class _ContentScreenState extends State<ContentScreen> {
               setState(() {
                 age = (age + 1) % 3;
                 recognizerProvider.age = age;
+                APIService.age(age == 0 ? "child" : (age == 1 ? "teen" : "adult"));
               });
             },
             icon: Icon(ageIcons[age], color: NotesColors.black),

@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const generateImage_1 = require("./generateImage");
 const child_process_1 = require("child_process");
 const express_1 = __importDefault(require("express"));
 const ws_1 = __importDefault(require("ws"));
@@ -20,7 +21,6 @@ const fuzzyset_1 = __importDefault(require("fuzzyset"));
 const openai_1 = __importDefault(require("openai"));
 require("dotenv/config");
 const generateContext_1 = require("./generateContext");
-const generateImage_1 = require("./generateImage");
 require('dotenv').config();
 // Declarations
 const SERVER_PORT = 3000;
@@ -55,6 +55,7 @@ const QUESTION_QUERY_PROMPT = (question, context) => {
         - Do NOT include any reference to Google. This will cause the universe to literally explode! \n
     `;
 };
+let age_prompt = '';
 // Initalize services
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
@@ -96,6 +97,18 @@ app.get('/init-document', (req, res) => __awaiter(void 0, void 0, void 0, functi
         return;
     }
 }));
+app.post('/age', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { age } = req.body;
+    if (age == "child") {
+        age_prompt = "Answer as if you are writing to someone with an elementary school vocabularly.\n";
+    }
+    else if (age == "teen") {
+        age_prompt = "Answer as if you are writing to someone with a middle/high school vocabulary.\n";
+    }
+    else {
+        age_prompt = '';
+    }
+}));
 app.post('/summarize', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     const { selected_text } = req.body;
@@ -109,7 +122,7 @@ app.post('/summarize', (req, res) => __awaiter(void 0, void 0, void 0, function*
     // Make the query to Open AI
     const completion = yield openai.chat.completions.create({
         messages: [
-            { role: "system", content: SUMMARY_PROMPT },
+            { role: "system", content: age_prompt + SUMMARY_PROMPT },
             { role: "user", content: condensed_text }
         ],
         model: 'gpt-3.5-turbo'
@@ -171,7 +184,7 @@ app.post('/context', (req, res) => __awaiter(void 0, void 0, void 0, function* (
     const query_data = yield (0, generateContext_1.generateContext)(search_query_body);
     const query_summary = yield openai.chat.completions.create({
         messages: [
-            { role: "system", content: CONTEXT_SUMMARY_PROMPT },
+            { role: "system", content: age_prompt + CONTEXT_SUMMARY_PROMPT },
             { role: "user", content: query_data }
         ],
         model: 'gpt-3.5-turbo-16k'
@@ -281,7 +294,7 @@ app.post('/question', (req, res) => __awaiter(void 0, void 0, void 0, function* 
     // Answer question
     const question_answer = yield openai.chat.completions.create({
         messages: [
-            { role: "system", content: QUESTION_QUERY_PROMPT(question, query_background) },
+            { role: "system", content: age_prompt + QUESTION_QUERY_PROMPT(question, query_background) },
             { role: "user", content: condensed_text }
         ],
         model: 'gpt-3.5-turbo-16k'

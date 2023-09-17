@@ -7,7 +7,6 @@ import FuzzySet from 'fuzzyset';
 import OpenAI from 'openai'
 import 'dotenv/config';
 import { generateContext } from './generateContext';
-import { getBingImage } from './generateImage';
 require('dotenv').config()
 
 // Declarations
@@ -97,9 +96,9 @@ app.get('/init-document', async (req, res) => {
 app.post('/age', async (req, res) => {
     const { age } = req.body;
     if(age == "child") {
-        age_prompt = "Answer as if you are speaking to a child. ";
+        age_prompt = "Answer as if you are writing to someone with an elementary school vocabularly.\n";
     }else if(age == "teen") {
-        age_prompt = "Answer as if you are writing to a teenager. ";
+        age_prompt = "Answer as if you are writing to someone with a middle/high school vocabulary.\n";
     }else {
         age_prompt = '';
     }
@@ -200,7 +199,7 @@ app.post('/context', async (req, res) => {
     
     const query_summary = await openai.chat.completions.create({
         messages: [
-            {role: "system", content: CONTEXT_SUMMARY_PROMPT},
+            {role: "system", content: age_prompt+CONTEXT_SUMMARY_PROMPT},
             {role: "user", content: query_data}
         ],
         model: 'gpt-3.5-turbo-16k'
@@ -343,7 +342,7 @@ app.post('/question', async (req, res) => {
     // Answer question
     const question_answer = await openai.chat.completions.create({
         messages: [
-            {role: "system", content: QUESTION_QUERY_PROMPT(question, query_background)},
+            {role: "system", content: age_prompt+QUESTION_QUERY_PROMPT(question, query_background)},
             {role: "user", content: condensed_text}
         ],
         model: 'gpt-3.5-turbo-16k'

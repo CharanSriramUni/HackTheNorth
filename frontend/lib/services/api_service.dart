@@ -77,4 +77,19 @@ class APIService {
 
     }
   }
+
+  static Future<void> age(String age) async {
+    const String apiURL = "$endPoint/age";
+    final Map<String, dynamic> requestBody = {
+      'age': age,
+    };
+    try {
+      final response = await post(
+          Uri.parse(apiURL),
+          body: requestBody
+      );
+    } catch (e) {
+
+    }
+  }
 }
