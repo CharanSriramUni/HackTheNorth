@@ -3,6 +3,8 @@ import 'package:hackthenotes/utils/colors.dart';
 import 'package:hackthenotes/utils/style_constants.dart';
 import 'package:ionicons/ionicons.dart';
 
+import '../services/api_service.dart';
+
 class UploadScreen extends StatelessWidget {
   UploadScreen({super.key});
 
@@ -12,7 +14,6 @@ class UploadScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     var width = StyleConstants.width;
     var height = StyleConstants.height;
-
     return Scaffold(
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -30,8 +31,9 @@ class UploadScreen extends StatelessWidget {
                 SizedBox(
                   width: width * 0.8,
                   child: TextField(
-                    onSubmitted: (value) {
+                    onSubmitted: (value) async {
                       // make api call
+                      APIService.sendURL(value);
                     },
                     controller: _urlController,
                     decoration: InputDecoration(
