@@ -4,9 +4,8 @@ import 'package:google_mlkit_digital_ink_recognition/google_mlkit_digital_ink_re
 import '../services/api_service.dart';
 
 class CommandRecognizerProvider extends ChangeNotifier {
-
   String circledText = "";
-  final List<String> commands = ['summarize', 'context',  'visualize'];
+  final List<String> commands = ['summarize', 'context', 'visualize'];
 
   final String language = 'en-US';
   late final DigitalInkRecognizer digitalInkRecognizer =
@@ -14,6 +13,7 @@ class CommandRecognizerProvider extends ChangeNotifier {
   final Ink ink = Ink();
   List<StrokePoint> points = [];
   String recognizedText = '';
+  int age = 0;
 
   void clearPad() {
     ink.strokes.clear();
@@ -28,13 +28,15 @@ class CommandRecognizerProvider extends ChangeNotifier {
       candidates.sort((a, b) => a.score - b.score > 0 ? 1 : -1);
       recognizedText = candidates.first.text;
       print(recognizedText);
-      String command = commands.singleWhere((command) =>
-        recognizedText.toLowerCase().replaceAll(' ', '').contains(command),
-        orElse: () => ''
-      );
+      String command = commands.singleWhere(
+          (command) => recognizedText
+              .toLowerCase()
+              .replaceAll(' ', '')
+              .contains(command),
+          orElse: () => '');
       if (command.isNotEmpty) {
         // run command
-        if(command == "summarize") {
+        if (command == "summarize") {
           print("summarizing...");
           APIService.summarize(circledText);
         }

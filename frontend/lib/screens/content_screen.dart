@@ -43,6 +43,13 @@ class _ContentScreenState extends State<ContentScreen>
   final GlobalKey repaintBoundaryKey = GlobalKey();
   final platform = MethodChannel('com.example.screenshot_channel');
 
+  int age = 0;
+  List<IconData> ageIcons = [
+    Icons.child_friendly_outlined,
+    Icons.school_outlined,
+    Icons.work_outline,
+  ];
+
   @override
   void initState() {
     animationController = AnimationController(
@@ -106,6 +113,15 @@ class _ContentScreenState extends State<ContentScreen>
         backgroundColor: NotesColors.white,
         toolbarHeight: 56.0,
         actions: [
+          IconButton(
+            onPressed: () {
+              setState(() {
+                age = (age + 1) % 3;
+                recognizerProvider.age = age;
+              });
+            },
+            icon: Icon(ageIcons[age], color: NotesColors.black),
+          ),
           IconButton(
             onPressed: () {
               setState(() {
@@ -196,13 +212,15 @@ class _ContentScreenState extends State<ContentScreen>
                       Rect largest =
                           findLargestCircumscribedRectangle(circledPoints);
                       var bytes = await capture(largest);
-                      var recognizedText =
-                          await TextRecognitionService.recognizeText(bytes!);
-                      print(recognizedText);
-                      Provider.of<CommandRecognizerProvider>(context,
-                              listen: false)
-                          .circledText = recognizedText;
-                      circled = true;
+                      if (bytes != null) {
+                        var recognizedText =
+                            await TextRecognitionService.recognizeText(bytes!);
+                        print(recognizedText);
+                        Provider.of<CommandRecognizerProvider>(context,
+                                listen: false)
+                            .circledText = recognizedText;
+                        circled = true;
+                      }
                     }
                   },
                   child: CustomPaint(
